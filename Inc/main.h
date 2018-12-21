@@ -63,6 +63,7 @@
 #define LED_GPIO_Port GPIOC
 #define NRF_IRQ_Pin GPIO_PIN_0
 #define NRF_IRQ_GPIO_Port GPIOA
+#define NRF_IRQ_EXTI_IRQn EXTI0_IRQn
 #define NRF_CE_Pin GPIO_PIN_1
 #define NRF_CE_GPIO_Port GPIOA
 #define NRF_CSN_Pin GPIO_PIN_4
@@ -85,6 +86,7 @@
 #define LCD_BCKLT_GPIO_Port GPIOA
 #define BUTTON_1_Pin GPIO_PIN_12
 #define BUTTON_1_GPIO_Port GPIOA
+#define BUTTON_1_EXTI_IRQn EXTI15_10_IRQn
 #define RELAY_1_Pin GPIO_PIN_8
 #define RELAY_1_GPIO_Port GPIOB
 #define RELAY_2_Pin GPIO_PIN_9

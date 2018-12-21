@@ -1,1 +1,1 @@
-/usr/bin/st-flash --reset --format ihex write ./Debug/TempMonitor_Master.hex
+/usr/bin/st-flash --reset --format ihex write ./Debug/TemperatureMonitor.hex

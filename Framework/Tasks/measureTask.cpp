@@ -27,31 +27,34 @@ void startMeasureTsk(void const * argument)
 {
 	UNUSED(argument);
 
+
+	//tx_printf("Measurement Task is disabled\n");
+	//osSignalWait (1, osWaitForever);
+
+
+
 	size_t i;
 
-	tx_printf("Initializing TempSensors...\n");
+	tx_printf("Init Measure Task...\n");
 	ow_init(&ow, NULL);    // Initialize 1-Wire library and set user argument to NULL
 
 	owr_t result = owERR;
-
 	while (result != owOK)
 	{
 		result = ow_search_devices(
 				&ow, &rom_ids[0], sizeof(rom_ids) / sizeof(rom_ids[0]), &sensorCount);
 
-		// Read temperature on all devices
+		// scan oneWire-bus
 		for (i = 0; i < sensorCount; i++)
 		{
 			if (ow_ds18x20_is_b(&ow, &rom_ids[i])) {
 				float temp;
-				uint8_t resolution = ow_ds18x20_get_resolution(&ow, &rom_ids[i]);
+				uint8_t resolution = ow_ds18x20_set_resolution(&ow, &rom_ids[i], 12);
 				if (ow_ds18x20_read(&ow, &rom_ids[i], &temp))
 				{
-					tx_printf("Device ROM addr: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X: ",
+					tx_printf("Device ROM addr: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
 							rom_ids[i].rom[0], rom_ids[i].rom[1], rom_ids[i].rom[2], rom_ids[i].rom[3],
 							rom_ids[i].rom[4], rom_ids[i].rom[5], rom_ids[i].rom[6], rom_ids[i].rom[7]);
-					tx_printf("Sensor %u temperature is %d.%d degrees (%u bits resolution)\n",
-							(unsigned)i, (int)temp, (int)((temp * 1000.0f) - (((int)temp) * 1000)), (unsigned)resolution);
 				}
 				else
 				{
@@ -77,6 +80,7 @@ void startMeasureTsk(void const * argument)
 		ow_ds18x20_start(&ow, NULL);        // Start conversion on all devices, use protected API
 		osDelay(1000);                      // Release thread for 1 second
 
+
 		// Read temperature on all devices
 		for (i = 0; i < sensorCount; i++)
 		{
@@ -91,10 +95,10 @@ void startMeasureTsk(void const * argument)
 			}
 		}
 
-		/*for (uint8_t i=0; i<sensorCount; i++)
+		for (i=0; i < sensorCount; i++)
 		{
 			SensorDataType* get_dummy = msmnt->get(i);
-			tx_printf("%i get_dummy: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X / %d.%d\n",
+			tx_printf("Sensor %i: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X / %d.%d\n",
 					i,
 					get_dummy->sensor_ID[0],
 					get_dummy->sensor_ID[1],
@@ -106,10 +110,9 @@ void startMeasureTsk(void const * argument)
 					get_dummy->sensor_ID[7],
 					(int) get_dummy->temperature,
 					(int)((get_dummy->temperature * 1000.0f) - (((int)get_dummy->temperature) * 1000))	);
-		}*/
+		}
 
-
-		osThreadYield();
+		//osThreadYield();
 
 	}
 

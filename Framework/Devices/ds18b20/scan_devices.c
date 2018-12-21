@@ -1,6 +1,6 @@
 #include "../ds18b20/scan_devices.h"
 #include "stdio.h"
-
+#include "../../System/uart_printf.h"
 
 
 /**

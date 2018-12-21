@@ -14,7 +14,7 @@ ThetaMeasurement::ThetaMeasurement(uint8_t devices_count)
 {
 	sensorData = static_cast<SensorDataType*>(
 			malloc (sizeof(SensorDataType) * devices_count));
-	length = devices_count;
+	sensorCount = devices_count;
 }
 
 void ThetaMeasurement::put(
@@ -34,7 +34,7 @@ SensorDataType* ThetaMeasurement::get(uint8_t pos) const
 
 uint8_t ThetaMeasurement::update(uint8_t sensor_ID[SENSOR_ID_LEN], float temperature)
 {
-	for (uint8_t i=0; i < length; i++)
+	for (uint8_t i=0; i < sensorCount; i++)
 	{
 		SensorDataType* actData = get(i);
 
@@ -45,6 +45,22 @@ uint8_t ThetaMeasurement::update(uint8_t sensor_ID[SENSOR_ID_LEN], float tempera
 		}
 	}
 	return ERROR;
+}
+
+ID_Table::StationType ThetaMeasurement::get_stationType(void)
+{
+	// if we get different station types from ID_Table, we round the result
+	uint32_t stations = 0;
+
+	for (uint8_t i=0; i < sensorCount; i++)
+	{
+		stations += ID_Table::get_stationNo(get(i)->sensor_ID);
+	}
+
+	float result = static_cast<float>(stations) / sensorCount;
+	result = result + 0.5f;
+
+	return static_cast<ID_Table::StationType>(result);
 }
 
 /* to be deleted

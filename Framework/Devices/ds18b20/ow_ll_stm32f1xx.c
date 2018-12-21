@@ -33,13 +33,14 @@
 
 #include <../Framework/System/uart_printf.h>
 #include "stm32f1xx_hal.h"
+#include "cmsis_os.h"
 #include "ow_ll.h"
 
 
 extern UART_HandleTypeDef* get_huart3(void);
-extern DMA_HandleTypeDef*  get_hdma_usart3_rx(void);
+//extern DMA_HandleTypeDef*  get_hdma_usart3_rx(void);
 #define UART_PORT get_huart3()
-#define UART_DMA_RX get_hdma_usart3_rx()
+//#define UART_DMA_RX get_hdma_usart3_rx()
 #define UART_TX_PORT TEMP_SENS_TX_GPIO_Port
 #define UART_TX_PIN TEMP_SENS_TX_Pin
 
@@ -115,10 +116,10 @@ uint8_t ow_ll_transmit_receive(
 	if (len <= 0 )
 		return 0;
 
-	HAL_UART_Transmit_DMA(UART_PORT, (uint8_t*) tx, len);
+	/*HAL_UART_Transmit_DMA(UART_PORT, (uint8_t*) tx, len);
 	HAL_UART_Receive_DMA(UART_PORT, (uint8_t*) rx, len);
 
-	// wait until USART has finished
+	// wait until USART has finished. UNSAFE - hangs often
 	while(HAL_DMA_GetState(UART_DMA_RX) == HAL_DMA_STATE_BUSY)
 	{
 		osDelay(1); // use osdelay() in OS environment here
@@ -127,16 +128,16 @@ uint8_t ow_ll_transmit_receive(
 		{
 			return 0;
 		}
-	}
+	}	*/
 
 	// Byte for byte version
-	/*while (len--)
+	while (len--)
 	{
 		HAL_UART_Transmit(UART_PORT, (uint8_t*) tx, 1, timeout);
 		tx++;
 		HAL_UART_Receive(UART_PORT, rx, 1, timeout);
 		rx++;
-	}*/
+	}
 
     return 1;
 }

@@ -32,7 +32,7 @@ static constexpr theta_sens_type theta_sensors_id_list[ID_TABLE_LEN] =
 {
 		// Sensortable of waterproof DS18B20 devices
 		// ID (64 bit)
-		//  StaionNo  RelayNo 	Shortname (5 bytes)
+		//  StaionType  RelayNo 	Shortname (5 bytes)
 		{  0x28, 0xFF, 0x89, 0x0E, 0x02, 0x17, 0x03, 0x4A,
 				0,		1,    	'I','N','N','E','N', '\0'},
 		{  0x28, 0xFF, 0x45, 0xB1, 0xC2, 0x17, 0x01, 0xAD,
@@ -76,6 +76,13 @@ static constexpr theta_sens_type theta_sensors_id_list[ID_TABLE_LEN] =
 
 class ID_Table {
 public:
+	enum StationType
+	{
+		MASTER 	 = 0,
+		SLAVE_01 = 1,
+		SLAVE_02 = 2
+	};
+
 	ID_Table();
 	virtual ~ID_Table() {};
 

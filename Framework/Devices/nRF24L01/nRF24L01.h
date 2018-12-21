@@ -207,6 +207,13 @@ static const uint8_t nRF24_ADDR_REGS[7] = {
 class NRF24L01
 {
 public:
+	typedef enum {
+		nRF24_TX_ERROR  = (uint8_t)0x00, // Unknown error
+		nRF24_TX_SUCCESS,                // Packet has been transmitted successfully
+		nRF24_TX_TIMEOUT,                // It was timeout during packet transmit
+		nRF24_TX_MAXRT                   // Transmit failed with maximum auto retransmit count
+	} nRF24_TXResult;
+
 	NRF24L01(Spi_socket* spi_socket, NRF24L01_GPIO* gpio_socket);
 	virtual ~NRF24L01() {};
 
@@ -242,6 +249,9 @@ public:
 	void ClearIRQFlags(void);
 	void WritePayload(uint8_t *pBuf, uint8_t length);
 	nRF24_RXResult ReadPayload(uint8_t *pBuf, uint8_t *length);
+
+	nRF24_TXResult TransmitPacket(uint8_t *pBuf, uint8_t length);
+
 	void DumpConfig(void);
 
 	inline void CE_L(void) { gpio_socket->nRF24_CE_L(); }
@@ -254,6 +264,7 @@ public:
 private:
 	Spi_socket* 	spi_socket;
 	NRF24L01_GPIO* 	gpio_socket;
+
 };
 
 #endif /* DEVICES_NRF24L01_NRF24L01_H_ */

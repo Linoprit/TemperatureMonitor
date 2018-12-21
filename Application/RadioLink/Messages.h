@@ -13,7 +13,7 @@
 #define	 PACKED	__attribute__ ((packed))
 
 
-#define nRF_MAXBUFF_LEN				 9
+#define nRF_MAXBUFF_LEN				10 //TODO richtig einstellen = RX/TX bufflen
 #define nRF_HEADER_LEN				 1
 
 #define nRF_CMD_SWITCH_CHANNEL 		 1
@@ -22,10 +22,6 @@
 #define nRF_MSG_PING				10
 #define nRF_MSG_STATISTICS			11
 #define nRF_MSG_THETA 				12
-
-#if ((THETA_MASTER + THETA_SLAVE) != 1)
-#error "Define only THETA_MASTER or THETA_SLAVE!"
-#endif
 
 
 class Messages {

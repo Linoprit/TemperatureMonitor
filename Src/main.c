@@ -69,8 +69,6 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
-DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
 
 osThreadId measureTskHandle;
 uint32_t measureTskBuffer[ 128 ];
@@ -105,7 +103,7 @@ SPI_HandleTypeDef*  get_nRF24_SPI(void)			{ return &hspi1; 			}
 UART_HandleTypeDef* get_huart1(void)			{ return &huart1; 			}
 UART_HandleTypeDef* get_huart2(void)			{ return &huart2; 			}
 UART_HandleTypeDef* get_huart3(void)			{ return &huart3; 			}
-DMA_HandleTypeDef*  get_hdma_usart3_rx(void)	{ return &hdma_usart3_rx;	 }
+//DMA_HandleTypeDef*  get_hdma_usart3_rx(void)	{ return &hdma_usart3_rx;	 }
 
 
 /* USER CODE END PFP */
@@ -167,7 +165,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of measureTsk */
-  osThreadStaticDef(measureTsk, startMeasureTsk, osPriorityIdle, 0, 128, measureTskBuffer, &measureTskControlBlock);
+  osThreadStaticDef(measureTsk, startMeasureTsk, osPriorityAboveNormal, 0, 128, measureTskBuffer, &measureTskControlBlock);
   measureTskHandle = osThreadCreate(osThread(measureTsk), NULL);
 
   /* definition and creation of nRF24Tsk */
@@ -374,12 +372,6 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-  /* DMA1_Channel3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
   /* DMA1_Channel4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
@@ -431,7 +423,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : NRF_IRQ_Pin */
   GPIO_InitStruct.Pin = NRF_IRQ_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(NRF_IRQ_GPIO_Port, &GPIO_InitStruct);
 
@@ -451,8 +443,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : BUTTON_1_Pin */
   GPIO_InitStruct.Pin = BUTTON_1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(BUTTON_1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RELAY_1_Pin RELAY_2_Pin */
@@ -461,6 +453,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 

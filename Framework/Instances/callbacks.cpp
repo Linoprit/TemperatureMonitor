@@ -25,7 +25,7 @@ ISR_callback *uart1_RxCplt_callback   = NULL;
 ISR_callback *uart2_RxCplt_callback   = NULL;
 ISR_callback *uart3_RxCplt_callback   = NULL;
 ISR_callback *gpio_nRF24_callback	  = NULL;
-uint16_t	 nRF24_IRQ_Pin;
+
 
 
 /*void HAL_SYSTICK_Callback(void) {}*/
@@ -38,6 +38,12 @@ void gpio_callback_add(ISR_callback* callback)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	//UNUSED(GPIO_Pin);
+
+	//tx_printf("pin %i / %i\n", GPIO_Pin, Common::nRF24_gpio->get_IRQ_Pin());
+	/*if (GPIO_Pin == Common::nRF24_gpio->get_IRQ_Pin() )
+		tx_printf("Pin is OK.\n");
+	if (gpio_nRF24_callback == NULL)
+		tx_printf("callback is null!\n");*/
 
 	if ((gpio_nRF24_callback != NULL) && (GPIO_Pin == Common::nRF24_gpio->get_IRQ_Pin() ))
 	{
