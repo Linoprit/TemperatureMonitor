@@ -25,7 +25,7 @@ public:
   uint8_t buffer_size(void);
 
   // read item and don't change the index
-  uint8_t Get(void);
+  uint8_t View(void);
 
 private:
   uint8_t *buffer;

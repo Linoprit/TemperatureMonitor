@@ -12,10 +12,37 @@
 
 ThetaMeasurement::ThetaMeasurement(uint8_t devices_count)
 {
-	sensorData = static_cast<SensorDataType*>(
-			malloc (sizeof(SensorDataType) * devices_count));
+	sensorData =
+			static_cast<SensorDataType*>(calloc(devices_count, sizeof(SensorDataType)));
 	sensorCount = devices_count;
 }
+
+// MASTER Mode
+ThetaMeasurement::ThetaMeasurement()
+{
+	sensorData =
+			static_cast<SensorDataType*>(calloc(ID_TABLE_LEN, sizeof(SensorDataType)));
+	sensorCount = ID_TABLE_LEN;
+
+	uint8_t i, j;
+	uint8_t bytelen = sizeof(SensorDataType) * sensorCount;
+	uint8_t* tgt_ptr = (uint8_t*) sensorData;
+	uint8_t* src_ptr;
+
+	for (i=0; i < ID_TABLE_LEN; i++)
+	{
+		src_ptr = (uint8_t*) &theta_sensors_id_list[i];
+		tgt_ptr = (uint8_t*) &sensorData[i];
+		for(j=0; j < SENSOR_ID_LEN; j++)
+		{
+			tgt_ptr[j] = src_ptr[j];
+		}
+		sensorData[i].temperature = static_cast<float>(INVLD_TEMPERATURE);
+	}
+
+}
+
+
 
 void ThetaMeasurement::put(
 		uint8_t pos, uint8_t sensor_ID[SENSOR_ID_LEN], float temperature)

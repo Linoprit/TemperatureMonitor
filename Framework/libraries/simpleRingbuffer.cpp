@@ -53,7 +53,7 @@ uint8_t simpleRingbuffer::Read(void)
 }
 
 // read item and don't change the index
-uint8_t simpleRingbuffer::Get(void)
+uint8_t simpleRingbuffer::View(void)
 {
   uint8_t c = buffer[readIndex];
   return c;

@@ -15,6 +15,8 @@
  */
 
 
+#include "../Application/ThetaSensors/ThetaMeasurement.h"
+
 
 // C interface
 #ifdef __cplusplus
@@ -26,7 +28,9 @@
 
 
 EXTERNC void StartnRF24Tsk(void const * argument);
-//EXTERNC int lw_main(void);
+EXTERNC ThetaMeasurement* get_remoteMsmt(void) ;
+
+
 
 #undef EXTERNC
 #ifdef __cplusplus

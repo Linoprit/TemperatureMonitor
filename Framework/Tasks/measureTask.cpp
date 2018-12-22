@@ -32,7 +32,6 @@ void startMeasureTsk(void const * argument)
 	//osSignalWait (1, osWaitForever);
 
 
-
 	size_t i;
 
 	tx_printf("Init Measure Task...\n");
@@ -49,7 +48,7 @@ void startMeasureTsk(void const * argument)
 		{
 			if (ow_ds18x20_is_b(&ow, &rom_ids[i])) {
 				float temp;
-				uint8_t resolution = ow_ds18x20_set_resolution(&ow, &rom_ids[i], 12);
+				ow_ds18x20_set_resolution(&ow, &rom_ids[i], 12);
 				if (ow_ds18x20_read(&ow, &rom_ids[i], &temp))
 				{
 					tx_printf("Device ROM addr: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
@@ -63,7 +62,6 @@ void startMeasureTsk(void const * argument)
 				}
 			}
 		}
-
 	}
 
 	msmnt = new ThetaMeasurement(sensorCount);
@@ -74,12 +72,11 @@ void startMeasureTsk(void const * argument)
 
 	for(;;)
 	{
-	  //HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
-		tx_printf("\nStart temperature conversion\n");
-		ow_ds18x20_start(&ow, NULL);        // Start conversion on all devices, use protected API
-		osDelay(1000);                      // Release thread for 1 second
-
+		//tx_printf("\nStart temperature conversion\n");
+		ow_ds18x20_start(&ow, NULL);  // Start conversion on all devices, use protected API
+		osDelay(1000);                // Release thread for 1 second
 
 		// Read temperature on all devices
 		for (i = 0; i < sensorCount; i++)
@@ -95,7 +92,7 @@ void startMeasureTsk(void const * argument)
 			}
 		}
 
-		for (i=0; i < sensorCount; i++)
+		/*for (i=0; i < sensorCount; i++)
 		{
 			SensorDataType* get_dummy = msmnt->get(i);
 			tx_printf("Sensor %i: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X / %d.%d\n",
@@ -110,10 +107,9 @@ void startMeasureTsk(void const * argument)
 					get_dummy->sensor_ID[7],
 					(int) get_dummy->temperature,
 					(int)((get_dummy->temperature * 1000.0f) - (((int)get_dummy->temperature) * 1000))	);
-		}
+		}*/
 
 		//osThreadYield();
-
 	}
 
 }

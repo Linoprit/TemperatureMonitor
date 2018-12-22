@@ -12,9 +12,39 @@
 #include "../System/uart_printf.h"
 #include "../Tasks/nRF24Task.h"
 #include "../Application/RadioLink/nRF24L01_Basis.h"
-#include "../../Application/ThetaSensors/ID_Table.h"
-#include "../../Application/ThetaSensors/ThetaMeasurement.h"
+#include "../Application/RadioLink/Messages.h"
+#include "../Application/ThetaSensors/ID_Table.h"
 #include "../Tasks/measureTask.h"
+
+
+ThetaMeasurement* remoteMsmt = NULL;
+ThetaMeasurement* get_remoteMsmt(void) { return remoteMsmt; };
+
+void process_rx_data(simpleRingbuffer* rb)
+{
+	if (!rb->HasData())
+		return;
+
+	while(rb->HasData())
+	{
+		uint8_t msgID = rb->View();
+		if (msgID == MSG_ID_THETA)
+		{
+			Messages::msg_theta_struct msg;
+			uint8_t* msg_ptr = (uint8_t*) &msg;
+
+			for(uint8_t i=0; i < nRF_PAYLOAD_LEN; i++)
+			{
+				*msg_ptr = rb->Read();
+				msg_ptr++;
+			}
+
+			if (remoteMsmt != NULL)
+				remoteMsmt->update(&msg.sensor_id[0], msg.theta);
+		}
+		// TODO if (msgID == MSG_ID_STATISTICS)
+	}
+}
 
 
 
@@ -36,20 +66,61 @@ void StartnRF24Tsk(void const * argument)
 	ID_Table::StationType stationType = msmnt->get_stationType();
 	tx_printf("stationtype: %i\n", stationType);
 
-	NRF24L01* nRF24 = Common::nRF24_basis->get_nRF24();
+	//NRF24L01* nRF24 = Common::nRF24_basis->get_nRF24();
 	Common::nRF24_basis->init(msmnt->get_stationType());
+
 
 	if (stationType == ID_Table::MASTER)
 	{
+		remoteMsmt = new ThetaMeasurement(); // no argument = Master mode
+
 		for(;;)
 		{
 			//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-			osDelay(1000);
+
+			// wait for data to arrive. nRF24L01_Basis-ISR will notify.
+			//osEvent result = osSignalWait(0x0, osWaitForever);
+			// for some reason, notification doesn't work.
+			osDelay(500);
+
+			simpleRingbuffer* _rb = Common::nRF24_basis->get_rx_ringbuffer();
+			if (_rb != NULL)
+			{
+				process_rx_data(_rb);
+			}
 		}
 	}
 
 	if ( (stationType == ID_Table::SLAVE_02) ||  (stationType == ID_Table::SLAVE_01))
 	{
+		uint8_t i;
+		for(;;)
+		{
+			//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			//NRF24L01::nRF24_TXResult tx_res;
+
+			for (i=0; i < msmnt->get_sensorCount(); i++)
+			{
+				Messages::msg_theta_struct msg;
+				const SensorDataType* data = msmnt->get(i);
+
+				for(uint8_t i=0; i < 8; i++)
+				{
+					msg.sensor_id[i] = data->sensor_ID[i];
+				}
+				msg.theta	  = data->temperature;
+
+				//tx_res =
+				Common::nRF24_basis->transmitPacket((uint8_t*) &msg);
+			}
+
+			// TODO will we send statistics?
+			// TODO reset stats every hour, or so...
+			osDelay(1000);
+		}
+
+
+		/*
 		uint8_t payload_length = 10;
 		char	buffer[21];
 		uint8_t j = 0, i;
@@ -60,7 +131,6 @@ void StartnRF24Tsk(void const * argument)
 		uint8_t otx_plos_cnt; // lost packet count
 		uint8_t otx_arc_cnt; // retransmit count
 		NRF24L01::nRF24_TXResult tx_res;
-
 
 		for(;;)
 		{
@@ -119,70 +189,11 @@ void StartnRF24Tsk(void const * argument)
 				break;
 			}
 			tx_printf("   ARC=%i LOST=%i\n", otx_arc_cnt, packets_lost);
-		}
+
+		} */
 
 
 	}
-
-
-
-
-		/*
-	  // SLAVE
-	  if (Common::messages->is_msg_new(Messages::switch_channel))
-	  {
-		  Common::messages->set_msg_done(Messages::switch_channel);
-		  Common::nRF24_device->SetRFChannel(
-				  Common::messages->get_cmd_switch_channel()->channel);
-	  }
-
-	  if (Common::messages->is_msg_new(Messages::use_address))
-	  {
-		  Common::messages->set_msg_done(Messages::use_address);
-		  // program new TX address
-		  Common::nRF24_device->SetAddr(
-				  nRF24_PIPETX, Common::messages->get_cmd_use_address()->address);
-	  }
-
-	  // MASTER
-	  if (Common::messages->is_msg_new(Messages::ping))
-	  {
-		  Common::messages->set_msg_done(Messages::ping);
-
-		  uint8_t slaveNo =
-				  ID_Table::get_slaveNo(Common::messages->get_msg_ping()->sens_id);
-
-		  if (slaveNo == 1)
-		  {
-			  // TODO
-			  // send cmd_use_address
-		  }
-		  else if (slaveNo == 2)
-		  {
-			  // TODO
-			  // send cmd_use_address
-		  }
-
-	  }
-
-	  if (Common::messages->is_msg_new(Messages::statistics))
-	  {
-		  Common::messages->set_msg_done(Messages::statistics);
-
-	  }
-
-	  if (Common::messages->is_msg_new(Messages::thetas))
-	  {
-		  Common::messages->set_msg_done(Messages::thetas);
-
-	  }
-
-
-	  // TODO wenn Theta-msg empfangen wurde, Temperatur anhand der ID in die
-	  // entsprechende Klasse kopieren.
-
-		 */
-
 
 }
 

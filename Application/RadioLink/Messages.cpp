@@ -19,6 +19,24 @@ Messages::Messages()
 		new_messages[i] = false;
 }
 
+void Messages::prepare_payload(uint8_t* payload, uint8_t* data, uint8_t msg_type)
+{
+	if (msg_type == MSG_ID_STATISTICS)
+	{
+		payload[0] = MSG_ID_STATISTICS;
+	}
+	else if (msg_type == MSG_ID_THETA)
+	{
+		payload[0] = MSG_ID_THETA;
+	}
+
+	for(uint8_t i=1; i < nRF_PAYLOAD_LEN; i++)
+	{
+		payload[i] = data[i-1];
+	}
+
+}
+
 
 
 void Messages::put_payload_to_struct(uint8_t* msg_buf)
@@ -27,7 +45,7 @@ void Messages::put_payload_to_struct(uint8_t* msg_buf)
 
 	switch (msg_buf[0])
 	{
-	case nRF_CMD_SWITCH_CHANNEL:
+	/*case nRF_CMD_SWITCH_CHANNEL:
 		pointer = (uint8_t *) &cmd_switch_channel;
 		set_msg_new(switch_channel);
 		break;
@@ -50,7 +68,7 @@ void Messages::put_payload_to_struct(uint8_t* msg_buf)
 	case nRF_MSG_THETA:
 		pointer = (uint8_t *) &msg_theta;
 		set_msg_new(thetas);
-		break;
+		break;*/
 
 	default:
 		pointer = 0;
@@ -59,7 +77,7 @@ void Messages::put_payload_to_struct(uint8_t* msg_buf)
 
 	if (pointer != 0)
 	{
-		for (unsigned int i = 0; i < nRF_MAXBUFF_LEN; i++)
+		for (unsigned int i = 0; i < nRF_PAYLOAD_LEN; i++)
 		{
 			*pointer = msg_buf[i];
 			pointer++;
@@ -71,20 +89,8 @@ void Messages::put_payload_to_struct(uint8_t* msg_buf)
 
 }
 
-Messages::cmd_switch_channel_struct* Messages::get_cmd_switch_channel(void)
-{
-	return &cmd_switch_channel;
-}
 
-Messages::cmd_use_address_struct* Messages::get_cmd_use_address(void)
-{
-	return &cmd_use_address;
-}
 
-Messages::msg_ping_struct* Messages::get_msg_ping(void)
-{
-	return &msg_ping;
-}
 
 Messages::msg_statistics_struct* Messages::get_msg_statistics(void)
 {

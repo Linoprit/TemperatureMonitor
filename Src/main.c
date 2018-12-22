@@ -76,6 +76,9 @@ osStaticThreadDef_t measureTskControlBlock;
 osThreadId nRF24TskHandle;
 uint32_t nRF24TskBuffer[ 128 ];
 osStaticThreadDef_t nRF24TskControlBlock;
+osThreadId displayTaskHandle;
+uint32_t displayTaskBuffer[ 128 ];
+osStaticThreadDef_t displayTaskControlBlock;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -93,16 +96,18 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 void startMeasureTsk(void const * argument);
 extern void StartnRF24Tsk(void const * argument);
+extern void StartDisplayTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
-osThreadId* 		get_MeasureTask(void)		{ return &measureTskHandle; }
-osThreadId* 		get_nRF24Task(void)			{ return &nRF24TskHandle;	}
-SPI_HandleTypeDef*  get_nRF24_SPI(void)			{ return &hspi1; 			}
-UART_HandleTypeDef* get_huart1(void)			{ return &huart1; 			}
-UART_HandleTypeDef* get_huart2(void)			{ return &huart2; 			}
-UART_HandleTypeDef* get_huart3(void)			{ return &huart3; 			}
+osThreadId* 		get_MeasureTask(void)		{ return &measureTskHandle;  }
+osThreadId* 		get_nRF24Task(void)			{ return &nRF24TskHandle;	 }
+osThreadId* 		get_DisplayTask(void)		{ return &displayTaskHandle; }
+SPI_HandleTypeDef*  get_nRF24_SPI(void)			{ return &hspi1; 			 }
+UART_HandleTypeDef* get_huart1(void)			{ return &huart1; 			 }
+UART_HandleTypeDef* get_huart2(void)			{ return &huart2; 			 }
+UART_HandleTypeDef* get_huart3(void)			{ return &huart3; 			 }
 //DMA_HandleTypeDef*  get_hdma_usart3_rx(void)	{ return &hdma_usart3_rx;	 }
 
 
@@ -171,6 +176,10 @@ int main(void)
   /* definition and creation of nRF24Tsk */
   osThreadStaticDef(nRF24Tsk, StartnRF24Tsk, osPriorityNormal, 0, 128, nRF24TskBuffer, &nRF24TskControlBlock);
   nRF24TskHandle = osThreadCreate(osThread(nRF24Tsk), NULL);
+
+  /* definition and creation of displayTask */
+  osThreadStaticDef(displayTask, StartDisplayTask, osPriorityLow, 0, 128, displayTaskBuffer, &displayTaskControlBlock);
+  displayTaskHandle = osThreadCreate(osThread(displayTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
