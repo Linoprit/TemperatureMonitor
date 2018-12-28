@@ -6,8 +6,10 @@
  */
 
 #include "nRF24L01_Basis.h"
+#include "../Inc/main.h"
 #include "../Framework/Instances/Common.h"
 #include "Messages.h"
+#include "../Framework/Tasks/nRF24Task.h"
 
 // Debugging
 #include "../Framework/libraries/Arduino/WString.h"
@@ -17,33 +19,28 @@
 
 
 
-
-
 nRF24L01_Basis::nRF24L01_Basis(NRF24L01* nRF24)
 {
 	this->nRF24 = nRF24;
 	lostPkgCount = 0;
 	retransCount = 0;
-
-	pipe1 = NULL;
-	/*pipe2 = new simpleRingbuffer(PIPE2_RB_LEN) ;
-	pipe3 = new simpleRingbuffer(PIPE3_RB_LEN) ;*/
 }
 
-void nRF24L01_Basis::init(const ID_Table::StationType station)
+void nRF24L01_Basis::init()
 {
 	// RX/TX disabled
-    nRF24->CE_L();
+	nRF24->CE_L();
+	ID_Table::StationType station = get_stationType();
 
-    // Configure the nRF24L01+
-    tx_printf("nRF24L01+ checking... ");
-    while (!nRF24->Check())
-    {
-    	osDelay(10);
-    }
-    tx_printf(" OK\n");
+	// Configure the nRF24L01+
+	tx_printf("nRF24L01+ checking... ");
+	while (!nRF24->Check())
+	{
+		osDelay(10);
+	}
+	tx_printf(" OK\n");
 
-    nRF24->Init(); // Initialize the nRF24L01 to its default state
+	nRF24->Init(); // Initialize the nRF24L01 to its default state
 
 	nRF24->SetRFChannel(nRF24_CHANNEL);
 	nRF24->SetDataRate(nRF24_DR_250kbps); //  2Mbps);
@@ -62,7 +59,14 @@ void nRF24L01_Basis::init(const ID_Table::StationType station)
 		nRF24->SetAddr(nRF24_PIPE0, &nRF24_TX_ADDR2[0]); // program address for pipe#0, must be same as TX (for Auto-ACK)
 	}
 
-	if ( (station == ID_Table::SLAVE_02) ||  (station == ID_Table::SLAVE_01))
+	if (station == ID_Table::SLAVE_03)
+	{
+		nRF24->SetAddr(nRF24_PIPETX, &nRF24_TX_ADDR3[0]); // program TX address
+		nRF24->SetAddr(nRF24_PIPE0, &nRF24_TX_ADDR3[0]); // program address for pipe#0, must be same as TX (for Auto-ACK)
+	}
+
+
+	if (station != ID_Table::MASTER)
 	{
 		nRF24->SetAutoRetr(nRF24_ARD_2500us, nRF_AUTO_RETRY);
 		nRF24->EnableAA(nRF24_PIPE0);
@@ -75,16 +79,17 @@ void nRF24L01_Basis::init(const ID_Table::StationType station)
 
 	if (station == ID_Table::MASTER)
 	{
-		pipe1 = new simpleRingbuffer(PIPE1_RB_LEN) ;
-
 		nRF24->SetAddr(nRF24_PIPE1, &nRF24_RX_ADDR1[0]);
 		nRF24->SetRXPipe(nRF24_PIPE1, nRF24_AA_ON, nRF_PAYLOAD_LEN);
 		nRF24->SetAddr(nRF24_PIPE2, &nRF24_RX_ADDR2[0]);
 		nRF24->SetRXPipe(nRF24_PIPE2, nRF24_AA_ON, nRF_PAYLOAD_LEN);
+		nRF24->SetAddr(nRF24_PIPE3, &nRF24_RX_ADDR3[0]);
+		nRF24->SetRXPipe(nRF24_PIPE3, nRF24_AA_ON, nRF_PAYLOAD_LEN);
 
 		nRF24->SetOperationalMode(nRF24_MODE_RX);
 		nRF24->CE_H();
-		gpio_callback_add((ISR_callback*) this);
+
+		nRF24_callback_add((ISR_callback*) this);
 	}
 
 	tx_printf("Radio init done.\n");
@@ -158,13 +163,25 @@ void nRF24L01_Basis::add_stats(uint8_t lostPkgCount, uint8_t retransCount)
 }
 
 
+ID_Table::StationType nRF24L01_Basis::get_stationType(void)
+{
+	uint8_t station =
+			(HAL_GPIO_ReadPin(StationCode1_GPIO_Port, StationCode1_Pin) << 1) |
+			(HAL_GPIO_ReadPin(StationCode0_GPIO_Port, StationCode0_Pin) );
+
+	return static_cast<ID_Table::StationType>(station);
+}
+
+
 void nRF24L01_Basis::ISR_callback_fcn (void)
 {
+	// TODO if we want to receive statistics, we need the pipe-info
 	//nRF24_RXResult pipe;
 	uint8_t payload_length;
 	uint8_t nRF24_payload[nRF_PAYLOAD_LEN];
 
-	// TODO if we want to receive statistics, we need the pipe-info
+	// TODO remove ledblink
+	//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
 	if (nRF24->GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY)
 	{
@@ -172,52 +189,25 @@ void nRF24L01_Basis::ISR_callback_fcn (void)
 		nRF24->ReadPayload(nRF24_payload, &payload_length);
 		nRF24->ClearIRQFlags();
 
-		/*char	buffer[21];
-		for (uint8_t l=0; l < payload_length; l++)
+		if (Common::nRF24_basis->get_stationType() == ID_Table::MASTER)
 		{
-			sprintf(&buffer[l*2], "%02X", (unsigned) nRF24_payload[l]);
+			osPoolId* msg_pool 	= get_msg_pool();
+			osMessageQId* queue = get_quue();
+
+			if(payload_length != nRF_PAYLOAD_LEN)
+				return;
+
+			Messages::msg_dummy_struct* msg =
+					(Messages::msg_dummy_struct*) osPoolAlloc(*msg_pool);
+
+			for (uint8_t i=0; i < sizeof(Messages::msg_dummy_struct); i++)
+			{
+				msg->byte[i] = nRF24_payload[i];
+			}
+
+			osMessagePut(*queue, (uint32_t)msg, 0);
 		}
-		buffer[20]='\0';
-		tx_printf("PAYLOAD:>%s< TX: %i\n", buffer, pipe);*/
+
+
 	}
-
-	if (pipe1 != NULL)
-	{
-		for(uint8_t i=0; i < payload_length; i++)
-		{
-			pipe1->Write(nRF24_payload[i]);
-		}
-	}
-
-	// notify the controlling task, that data has arrived
-	//osThreadId* task_to_notify = get_nRF24Task();
-	//osSignalSet(*task_to_notify, 0x0);
-	// for some reason, notification doesn't work.
-
-
-
-
-	/*if (nRF24->GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY)
-	{
-		//pipe =
-		nRF24->ReadPayload(nRF24_payload, &payload_length);
-		nRF24->ClearIRQFlags();
-
-		if (payload_length > nRF_MAXBUFF_LEN)
-		{
-			// TODO some error-action, LCD-Message or so...
-			return;
-		}
-
-
-		char	buffer[21];
-		for (uint8_t l=0; l < payload_length; l++)
-		{
-			sprintf(&buffer[l*2], "%02X", (unsigned) nRF24_payload[l]);
-		}
-		buffer[20]='\0';
-		tx_printf("PAYLOAD:>%s< ... TX: ", buffer);
-
-	}*/
-
 }

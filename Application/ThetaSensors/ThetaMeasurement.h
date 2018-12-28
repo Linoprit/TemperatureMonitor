@@ -30,12 +30,9 @@ public:
 	void put(uint8_t pos, uint8_t sensor_ID[SENSOR_ID_LEN], float temperature);
 	uint8_t update(uint8_t sensor_ID[SENSOR_ID_LEN], float temperature);
 	SensorDataType* get(uint8_t pos) const;
-	ID_Table::StationType get_stationType(void);
 	uint8_t get_sensorCount(void) { return sensorCount; }
 
-
 private:
-	// TODO lock with semaphore
 	SensorDataType* sensorData;
 	uint8_t sensorCount;
 };

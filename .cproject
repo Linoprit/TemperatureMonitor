@@ -106,7 +106,7 @@
 					<sourceEntries>
 						<entry excluding="LWolf" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Application" />
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers" />
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Framework" />
+						<entry excluding="Devices/PCD8544_LCD/bmp2glcd_v1-02-src" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Framework" />
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc" />
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares" />
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src" />

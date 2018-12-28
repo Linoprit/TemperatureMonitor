@@ -14,6 +14,7 @@
 #include "../Framework/Devices/ds18b20/ow_device_ds18x20.h"
 #include "../Framework/Devices/ds18b20/scan_devices.h"
 #include "../System/uart_printf.h"
+#include "../../Framework/Tasks/nRF24Task.h"
 
 
 ow_t ow;
@@ -21,27 +22,17 @@ ow_rom_t rom_ids[20];
 size_t sensorCount;
 ThetaMeasurement* msmnt = NULL;
 
-
-// C interface
-void startMeasureTsk(void const * argument)
+void _scanSensors(void)
 {
-	UNUSED(argument);
-
-
-	//tx_printf("Measurement Task is disabled\n");
-	//osSignalWait (1, osWaitForever);
-
-
 	size_t i;
-
-	tx_printf("Init Measure Task...\n");
-	ow_init(&ow, NULL);    // Initialize 1-Wire library and set user argument to NULL
 
 	owr_t result = owERR;
 	while (result != owOK)
 	{
 		result = ow_search_devices(
 				&ow, &rom_ids[0], sizeof(rom_ids) / sizeof(rom_ids[0]), &sensorCount);
+
+		tx_printf("Sensors found: %i\n", sensorCount);
 
 		// scan oneWire-bus
 		for (i = 0; i < sensorCount; i++)
@@ -63,12 +54,74 @@ void startMeasureTsk(void const * argument)
 			}
 		}
 	}
+}
 
-	msmnt = new ThetaMeasurement(sensorCount);
+void _initMeasurment(void)
+{
+	size_t i;
+
+	if (Common::nRF24_basis->get_stationType() == ID_Table::MASTER)
+	{
+		msmnt = get_remoteMsmt();
+	}
+	else
+	{
+		msmnt = new ThetaMeasurement(sensorCount);
+		for (i = 0; i < sensorCount; i++)
+		{
+			msmnt->put(i, rom_ids[i].rom, (float) INVLD_TEMPERATURE);
+		}
+	}
+}
+
+void _relayOnOff(uint8_t relayNo, bool on)
+{
+	GPIO_PinState state;
+	if (on == true)
+		state = GPIO_PIN_RESET;
+	else
+		state = GPIO_PIN_SET;
+
+	if (relayNo == 1)
+		HAL_GPIO_WritePin(RELAY_1_GPIO_Port, RELAY_1_Pin, state);
+
+	if (relayNo == 2)
+		HAL_GPIO_WritePin(RELAY_2_GPIO_Port, RELAY_2_Pin, state);
+}
+
+void _checkRelays(void)
+{
+	size_t i;
 	for (i = 0; i < sensorCount; i++)
 	{
-		msmnt->put(i, rom_ids[i].rom, -255.0f);
+		SensorDataType* const sensData   = msmnt->get(i);
+		const theta_sens_type* idTblData = ID_Table::get_struct(sensData->sensor_ID);
+
+		int32_t	tmpTheta = (sensData->temperature + 0.05) * 10;
+		int32_t ThetaThres = idTblData->minTemp * 10;
+
+		if(tmpTheta <= ThetaThres)
+		{
+			_relayOnOff(idTblData->relayNo, true);
+		}
+		else
+		{
+			_relayOnOff(idTblData->relayNo, false);
+		}
 	}
+}
+
+void startMeasureTsk(void const * argument)
+{
+	UNUSED(argument);
+
+	size_t i;
+
+	tx_printf("Init Measure Task...\n");
+	ow_init(&ow, NULL);    // Initialize 1-Wire library and set user argument to NULL
+
+	_scanSensors();
+	_initMeasurment();
 
 	for(;;)
 	{
@@ -92,6 +145,10 @@ void startMeasureTsk(void const * argument)
 			}
 		}
 
+		_checkRelays();
+
+
+
 		/*for (i=0; i < sensorCount; i++)
 		{
 			SensorDataType* get_dummy = msmnt->get(i);
@@ -109,7 +166,6 @@ void startMeasureTsk(void const * argument)
 					(int)((get_dummy->temperature * 1000.0f) - (((int)get_dummy->temperature) * 1000))	);
 		}*/
 
-		//osThreadYield();
 	}
 
 }

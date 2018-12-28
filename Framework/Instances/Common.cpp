@@ -13,9 +13,10 @@
 
 
 NRF24L01* 				Common::nRF24_device	= NULL;
-Spi_socket*				Common::spi_socket		= NULL;
+Spi_socket*				Common::nRF24_spi_socket	= NULL;
 NRF24L01_GPIO* 			Common::nRF24_gpio		= NULL;
 nRF24L01_Basis*			Common::nRF24_basis		= NULL;
+
 
 
 // C interface
@@ -33,18 +34,19 @@ void Common::init()
 #endif /* TRACE */
 
 
-	spi_socket 		= new Spi_socket(get_nRF24_SPI());
+	nRF24_spi_socket = new Spi_socket(get_nRF24_SPI());
 	nRF24_gpio		= new NRF24L01_GPIO(
 			NRF_CE_GPIO_Port,  NRF_CE_Pin,
 			NRF_CSN_GPIO_Port, NRF_CSN_Pin,
 			NRF_IRQ_GPIO_Port, NRF_IRQ_Pin	);
-	nRF24_device 	= new NRF24L01(spi_socket, nRF24_gpio);
+	nRF24_device 	= new NRF24L01(nRF24_spi_socket, nRF24_gpio);
 	nRF24_basis		= new nRF24L01_Basis(nRF24_device);
 
 
 
-	// Workaround...
-	//osSignalSet (*get_displayTask(), 0);
+
+
+
 
 }
 

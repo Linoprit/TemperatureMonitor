@@ -10,14 +10,8 @@
 #include "stm32f1xx_hal.h"
 #include "Common.h"
 
-// #include "../Application/lw_main.h"
 #include "../Framework/libraries/Arduino/WString.h"
 #include "../Framework/libraries/HelpersLib.h"
-
-
-
-
-
 
 
 
@@ -25,29 +19,33 @@ ISR_callback *uart1_RxCplt_callback   = NULL;
 ISR_callback *uart2_RxCplt_callback   = NULL;
 ISR_callback *uart3_RxCplt_callback   = NULL;
 ISR_callback *gpio_nRF24_callback	  = NULL;
+ISR_callback *button_callback  	      = NULL;
 
 
 
 /*void HAL_SYSTICK_Callback(void) {}*/
 
-void gpio_callback_add(ISR_callback* callback)
+void nRF24_callback_add(ISR_callback* callback)
 {
 	gpio_nRF24_callback = callback;
+}
+
+void button_callback_add(ISR_callback* callback)
+{
+	button_callback = callback;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	//UNUSED(GPIO_Pin);
 
-	//tx_printf("pin %i / %i\n", GPIO_Pin, Common::nRF24_gpio->get_IRQ_Pin());
-	/*if (GPIO_Pin == Common::nRF24_gpio->get_IRQ_Pin() )
-		tx_printf("Pin is OK.\n");
-	if (gpio_nRF24_callback == NULL)
-		tx_printf("callback is null!\n");*/
-
 	if ((gpio_nRF24_callback != NULL) && (GPIO_Pin == Common::nRF24_gpio->get_IRQ_Pin() ))
 	{
 		gpio_nRF24_callback->ISR_callback_fcn();
+	}
+	else if ((button_callback != NULL) && (GPIO_Pin == BUTTON_1_Pin))
+	{
+		button_callback->ISR_callback_fcn();
 	}
 }
 

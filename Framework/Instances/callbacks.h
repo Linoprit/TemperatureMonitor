@@ -20,8 +20,8 @@ public:
 
 
 void uart_callback_add(UART_HandleTypeDef *huart, ISR_callback* callback);
-void gpio_callback_add(ISR_callback* callback);
-
+void nRF24_callback_add(ISR_callback* callback);
+void button_callback_add(ISR_callback* callback);
 
 
 #endif /* CALLBACKS_H_ */

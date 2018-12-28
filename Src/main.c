@@ -61,13 +61,12 @@
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
+DMA_HandleTypeDef hdma_spi2_tx;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
-DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
-DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 osThreadId measureTskHandle;
@@ -105,6 +104,7 @@ osThreadId* 		get_MeasureTask(void)		{ return &measureTskHandle;  }
 osThreadId* 		get_nRF24Task(void)			{ return &nRF24TskHandle;	 }
 osThreadId* 		get_DisplayTask(void)		{ return &displayTaskHandle; }
 SPI_HandleTypeDef*  get_nRF24_SPI(void)			{ return &hspi1; 			 }
+SPI_HandleTypeDef*  get_LCD_SPI(void)			{ return &hspi2;			 }
 UART_HandleTypeDef* get_huart1(void)			{ return &huart1; 			 }
 UART_HandleTypeDef* get_huart2(void)			{ return &huart2; 			 }
 UART_HandleTypeDef* get_huart3(void)			{ return &huart3; 			 }
@@ -387,9 +387,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
-  /* DMA1_Channel6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
   /* DMA1_Channel7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
@@ -455,6 +452,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(BUTTON_1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : StationCode0_Pin StationCode1_Pin */
+  GPIO_InitStruct.Pin = StationCode0_Pin|StationCode1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RELAY_1_Pin RELAY_2_Pin */
   GPIO_InitStruct.Pin = RELAY_1_Pin|RELAY_2_Pin;

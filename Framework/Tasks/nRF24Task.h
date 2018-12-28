@@ -16,6 +16,7 @@
 
 
 #include "../Application/ThetaSensors/ThetaMeasurement.h"
+#include "cmsis_os.h"
 
 
 // C interface
@@ -36,6 +37,10 @@ EXTERNC ThetaMeasurement* get_remoteMsmt(void) ;
 #ifdef __cplusplus
 
 // put cpp includes here!!
+osPoolId* get_msg_pool(void);
+osMessageQId* get_quue(void);
+
+
 
 
 

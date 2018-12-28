@@ -87,6 +87,10 @@
 #define BUTTON_1_Pin GPIO_PIN_12
 #define BUTTON_1_GPIO_Port GPIOA
 #define BUTTON_1_EXTI_IRQn EXTI15_10_IRQn
+#define StationCode0_Pin GPIO_PIN_4
+#define StationCode0_GPIO_Port GPIOB
+#define StationCode1_Pin GPIO_PIN_5
+#define StationCode1_GPIO_Port GPIOB
 #define RELAY_1_Pin GPIO_PIN_8
 #define RELAY_1_GPIO_Port GPIOB
 #define RELAY_2_Pin GPIO_PIN_9

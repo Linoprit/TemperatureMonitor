@@ -19,7 +19,7 @@ const uint8_t ID_Table::get_stationNo(uint8_t sensor_ID[SENSOR_ID_LEN])
 	for(uint8_t i=0; i < ID_TABLE_LEN; i++)
 	{
 		if(ID_is_same(sensor_ID, (uint8_t*) theta_sensors_id_list[i].sensor_ID) )
-			return theta_sensors_id_list[i].stationNo;
+			return theta_sensors_id_list[i].minTemp;
 	}
 	return INVLD_TEMPERATURE;
 }

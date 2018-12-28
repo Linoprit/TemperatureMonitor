@@ -20,29 +20,28 @@
 ThetaMeasurement* remoteMsmt = NULL;
 ThetaMeasurement* get_remoteMsmt(void) { return remoteMsmt; };
 
-void process_rx_data(simpleRingbuffer* rb)
+
+osPoolId  msg_pool;
+osPoolId* get_msg_pool(void) { return &msg_pool; }
+
+osMessageQId  queue;
+osMessageQId* get_quue(void) {return &queue; }
+
+
+
+void process_rx_data(Messages::msg_dummy_struct* msg)
 {
-	if (!rb->HasData())
-		return;
-
-	while(rb->HasData())
+	if(msg->byte[0] == MSG_ID_THETA)
 	{
-		uint8_t msgID = rb->View();
-		if (msgID == MSG_ID_THETA)
+		if (remoteMsmt != NULL)
 		{
-			Messages::msg_theta_struct msg;
-			uint8_t* msg_ptr = (uint8_t*) &msg;
+			/*tx_printf("got ROM: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+					msg->byte[1], msg->byte[2], msg->byte[3], msg->byte[4],
+					msg->byte[5], msg->byte[6], msg->byte[7], msg->byte[8]);*/
 
-			for(uint8_t i=0; i < nRF_PAYLOAD_LEN; i++)
-			{
-				*msg_ptr = rb->Read();
-				msg_ptr++;
-			}
-
-			if (remoteMsmt != NULL)
-				remoteMsmt->update(&msg.sensor_id[0], msg.theta);
+			float* theta = (float*) &msg->byte[9];
+			remoteMsmt->update(&msg->byte[1], *theta);
 		}
-		// TODO if (msgID == MSG_ID_STATISTICS)
 	}
 }
 
@@ -53,47 +52,56 @@ void StartnRF24Tsk(void const * argument)
 {
 	UNUSED(argument);
 
-	tx_printf("Init Radio Task...\n");
+	ID_Table::StationType stationType = Common::nRF24_basis->get_stationType();
 
-	ThetaMeasurement* msmnt = get_thetaMeasurement();
-	while (msmnt == NULL)
-	{
-		tx_printf("Determining station type...\n");
-		msmnt = get_thetaMeasurement();
-		osDelay(1000);
-	}
+	tx_printf("Init Radio Task, stationtype is: , %i\n", stationType);
 
-	ID_Table::StationType stationType = msmnt->get_stationType();
-	tx_printf("stationtype: %i\n", stationType);
-
-	//NRF24L01* nRF24 = Common::nRF24_basis->get_nRF24();
-	Common::nRF24_basis->init(msmnt->get_stationType());
-
+	Common::nRF24_basis->init();
 
 	if (stationType == ID_Table::MASTER)
 	{
 		remoteMsmt = new ThetaMeasurement(); // no argument = Master mode
 
+		osPoolDef(msg_pool, ID_TABLE_LEN, Messages::msg_dummy_struct);
+		osMessageQDef(queue, ID_TABLE_LEN, Messages::msg_dummy_struct);
+
+		msg_pool = osPoolCreate(osPool(msg_pool));
+		queue    = osMessageCreate(osMessageQ(queue), NULL);
+
 		for(;;)
 		{
+			//osDelay(1000);
 			//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
-			// wait for data to arrive. nRF24L01_Basis-ISR will notify.
-			//osEvent result = osSignalWait(0x0, osWaitForever);
-			// for some reason, notification doesn't work.
-			osDelay(500);
+			osEvent evt = osMessageGet(queue, 3000);// osWaitForever);
+			if(evt.status == osEventTimeout)
+				tx_printf("timeout ");
 
-			simpleRingbuffer* _rb = Common::nRF24_basis->get_rx_ringbuffer();
-			if (_rb != NULL)
+			if (evt.status == osEventMessage)
 			{
-				process_rx_data(_rb);
+				Messages::msg_dummy_struct* msg =
+						(Messages::msg_dummy_struct*) evt.value.p;
+
+				process_rx_data(msg);
+
+				osPoolFree(msg_pool, msg);
 			}
 		}
 	}
 
-	if ( (stationType == ID_Table::SLAVE_02) ||  (stationType == ID_Table::SLAVE_01))
+	if (stationType != ID_Table::MASTER)
 	{
 		uint8_t i;
+
+		ThetaMeasurement* msmnt = get_thetaMeasurement();
+		while (msmnt == NULL)
+		{
+			tx_printf("NRF: Waiting for sensors to initialize... ");
+			msmnt = get_thetaMeasurement();
+			osDelay(1000);
+		}
+		tx_printf("OK.\n");
+
 		for(;;)
 		{
 			//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);

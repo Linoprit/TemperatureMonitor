@@ -24,6 +24,12 @@ public:
 
 	enum msg_is_new_enum { statistics, thetas };
 
+	// maximum byte-size
+	typedef struct PACKED
+	{
+		uint8_t   byte[nRF_PAYLOAD_LEN];
+	} msg_dummy_struct;
+
 	typedef struct PACKED
 	{
 		uint8_t   msg_id = MSG_ID_STATISTICS;

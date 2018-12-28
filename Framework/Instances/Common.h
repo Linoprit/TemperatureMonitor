@@ -12,6 +12,7 @@
 #include "cmsis_os.h"
 
 
+
 // C interface
 #ifdef __cplusplus
 #define EXTERNC extern "C"
@@ -22,6 +23,7 @@
 EXTERNC void common_init(void);
 //EXTERNC UART_HandleTypeDef* get_huart1(void); //only for tx_printf
 EXTERNC SPI_HandleTypeDef*  get_nRF24_SPI(void);
+EXTERNC SPI_HandleTypeDef*  get_LCD_SPI(void);
 EXTERNC osThreadId* 		get_errorMsgTask(void);
 EXTERNC osThreadId* 		get_nRF24Task(void);
 
@@ -38,6 +40,7 @@ EXTERNC osThreadId* 		get_nRF24Task(void);
 #include "../Application/RadioLink/Messages.h"
 
 
+
 class Common
 {
 public:
@@ -48,11 +51,12 @@ public:
   static void init(void);
   static uint32_t get_tick(void);
 
-  static inline void delay(uint32_t delay)
-  { HAL_Delay(delay); }
+  static inline void delay(uint32_t delay)  { osDelay(delay); }//HAL_Delay(delay); }
+
+  // TODO cleanup - use get-functions!!
 
   // sockets
-  static Spi_socket*		spi_socket;
+  static Spi_socket*		nRF24_spi_socket;
 
   // system Classes
   // NOP
@@ -64,9 +68,9 @@ public:
   // Application Classes
   static nRF24L01_Basis*	nRF24_basis;
 
-
-
 private:
+
+
 
 };
 

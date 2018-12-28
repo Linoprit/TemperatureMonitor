@@ -9,22 +9,43 @@
 #include "StartDisplayTask.h"
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
+#include "../Instances/Common.h"
 #include "../System/uart_printf.h"
 #include "../Tasks/nRF24Task.h"
 #include "../Tasks/measureTask.h"
+#include "../Application/Nokia_LCD/LCDFunctions.h"
+#include "../libraries/HelpersLib.h"
 
 
+
+LCDFunctions* lcd;
+
+
+void clrTmpLine(char* tmpline, uint8_t len)
+{
+	for (uint8_t i=0; i < len; i++)
+		tmpline[i] = ' ';
+}
 
 void StartDisplayTask(void const * argument)
 {
 	UNUSED(argument);
 
-
-
-
-
+	lcd = new LCDFunctions();
+	lcd->ISR_callback_fcn(); // Backlight on
 
 	for(;;)
+	{
+		lcd->update();
+		lcd->incPage();
+
+		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		osDelay(3000);
+	}
+
+
+
+	/*for(;;)
 	{
 		uint8_t i;
 		SensorDataType* get_dummy;
@@ -33,6 +54,7 @@ void StartDisplayTask(void const * argument)
 
 
 		osDelay(1000);
+		//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
 		if (lcl_msmnt != NULL)
 		{
@@ -60,6 +82,10 @@ void StartDisplayTask(void const * argument)
 			for (i=0; i < ID_TABLE_LEN; i++)
 			{
 				get_dummy = rem_msmnt->get(i);
+				tx_printf("Remote %i: %d.%d\n",
+						i,
+						(int) get_dummy->temperature,
+						(int)((get_dummy->temperature * 1000.0f) - (((int)get_dummy->temperature) * 1000))	);
 
 				tx_printf("Remote %i: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X / %d.%d\n",
 						i,
@@ -72,13 +98,14 @@ void StartDisplayTask(void const * argument)
 						get_dummy->sensor_ID[6],
 						get_dummy->sensor_ID[7],
 						(int) get_dummy->temperature,
-						(int)((get_dummy->temperature * 1000.0f) - (((int)get_dummy->temperature) * 1000))	);
+						(int)((get_dummy->temperature * 1000.0f) - (((int)tmpSnsData->temperature) * 1000))	);
 			}
+			tx_printf("\n");
 		}
 
 
-		tx_printf("\n");
-	}
+
+	}*/
 
 
 }

@@ -6,13 +6,14 @@
  */
 
 #include "uart_printf.h"
+#include "cmsis_os.h"
 #include <stdio.h>
 #include <stdarg.h>
 
 extern UART_HandleTypeDef* get_huart1(void);
 #define UART_PORT get_huart1()
 
-#define TX_BUFF_LEN 500
+#define TX_BUFF_LEN 128
 uint8_t txBuff[TX_BUFF_LEN];
 uint16_t tx_act_pos = 0;
 
@@ -31,7 +32,7 @@ uint16_t tx_act_pos = 0;
 
 int tx_printf(const char *format, ...)
 {
-	const uint16_t timeout = 0xFFFF;
+	const uint16_t timeout = 0x00FF;
 	volatile uint16_t count = 0;
 	HAL_UART_StateTypeDef uart_status = HAL_UART_GetState(UART_PORT);
 
@@ -42,6 +43,7 @@ int tx_printf(const char *format, ...)
 		{
 			return ERROR;
 		}
+		osDelay(1);
 		count++;
 		uart_status = HAL_UART_GetState(UART_PORT);
 	}

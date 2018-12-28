@@ -25,7 +25,6 @@ ThetaMeasurement::ThetaMeasurement()
 	sensorCount = ID_TABLE_LEN;
 
 	uint8_t i, j;
-	uint8_t bytelen = sizeof(SensorDataType) * sensorCount;
 	uint8_t* tgt_ptr = (uint8_t*) sensorData;
 	uint8_t* src_ptr;
 
@@ -74,21 +73,6 @@ uint8_t ThetaMeasurement::update(uint8_t sensor_ID[SENSOR_ID_LEN], float tempera
 	return ERROR;
 }
 
-ID_Table::StationType ThetaMeasurement::get_stationType(void)
-{
-	// if we get different station types from ID_Table, we round the result
-	uint32_t stations = 0;
-
-	for (uint8_t i=0; i < sensorCount; i++)
-	{
-		stations += ID_Table::get_stationNo(get(i)->sensor_ID);
-	}
-
-	float result = static_cast<float>(stations) / sensorCount;
-	result = result + 0.5f;
-
-	return static_cast<ID_Table::StationType>(result);
-}
 
 /* to be deleted
 
