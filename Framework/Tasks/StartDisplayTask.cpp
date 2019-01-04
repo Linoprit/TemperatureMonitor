@@ -39,7 +39,17 @@ void StartDisplayTask(void const * argument)
 		lcd->update();
 		lcd->incPage();
 
-		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		/*tx_printf("timeouts: \n");
+		ThetaMeasurement* msmnt = get_thetaMeasurement();
+		for(uint8_t i=0; i < msmnt->get_sensorCount(); i++)
+		{
+			SensorDataType* actData = msmnt->get(i);
+			char* tmpShrtnm  =
+					const_cast<char*>(ID_Table::get_shortname( actData->sensor_ID ));
+			tx_printf("%s %i\n", tmpShrtnm, actData->timeoutCount);
+		}*/
+
+		//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 		osDelay(3000);
 	}
 

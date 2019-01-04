@@ -18,7 +18,7 @@
 
 
 static constexpr uint8_t nRF24_CHANNEL 		= 115;
-static constexpr uint32_t nRF24_WAIT_TIMEOUT = (uint32_t)0x000FFFFF;
+static constexpr int32_t nRF24_WAIT_TIMEOUT = (int32_t)0x00000FFF;
 static constexpr uint8_t nRF_AUTO_RETRY     = 10;
 
 // TX addresses

@@ -12,6 +12,8 @@
 #include "cmsis_os.h"
 
 
+#define TASK_DELAY 60000
+
 
 // C interface
 #ifdef __cplusplus

@@ -17,6 +17,8 @@
 #include "../Tasks/measureTask.h"
 
 
+#define TNSMT_REPEATS 5
+
 ThetaMeasurement* remoteMsmt = NULL;
 ThetaMeasurement* get_remoteMsmt(void) { return remoteMsmt; };
 
@@ -54,7 +56,7 @@ void StartnRF24Tsk(void const * argument)
 
 	ID_Table::StationType stationType = Common::nRF24_basis->get_stationType();
 
-	tx_printf("Init Radio Task, stationtype is: , %i\n", stationType);
+	tx_printf("Init Radio Task, stationtype is: %i\n", stationType);
 
 	Common::nRF24_basis->init();
 
@@ -75,7 +77,7 @@ void StartnRF24Tsk(void const * argument)
 
 			osEvent evt = osMessageGet(queue, 3000);// osWaitForever);
 			if(evt.status == osEventTimeout)
-				tx_printf("timeout ");
+				tx_printf("osMessageGet: timeout ");
 
 			if (evt.status == osEventMessage)
 			{
@@ -118,89 +120,15 @@ void StartnRF24Tsk(void const * argument)
 				}
 				msg.theta	  = data->temperature;
 
-				//tx_res =
-				Common::nRF24_basis->transmitPacket((uint8_t*) &msg);
+				for (uint8_t j=0; j < TNSMT_REPEATS; j++)
+				{
+					Common::nRF24_basis->transmitPacket((uint8_t*) &msg);
+					osDelay(200);
+				}
 			}
 
-			// TODO will we send statistics?
-			// TODO reset stats every hour, or so...
-			osDelay(1000);
+			osDelay(TASK_DELAY); // TODO one Minute cycle
 		}
-
-
-		/*
-		uint8_t payload_length = 10;
-		char	buffer[21];
-		uint8_t j = 0, i;
-		uint8_t k = 0;
-		uint8_t nRF24_payload[32];
-		uint32_t packets_lost = 0; // global counter of lost packets
-		uint8_t otx;
-		uint8_t otx_plos_cnt; // lost packet count
-		uint8_t otx_arc_cnt; // retransmit count
-		NRF24L01::nRF24_TXResult tx_res;
-
-		for(;;)
-		{
-			//osSignalWait (0, osWaitForever);
-			HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-			osDelay(1000);
-
-
-			// Prepare data packet
-			for (i = 0; i < payload_length; i++) {
-				nRF24_payload[i] = j++;
-				if (j > 0x000000FF) j = 0;
-			}
-
-			if (k == 0)
-			{
-				k++;
-				nRF24->SetAddr(nRF24_PIPETX, &nRF24_TX_ADDR1[0]);
-				nRF24->SetAddr(nRF24_PIPE0,  &nRF24_TX_ADDR1[0]);
-			}
-			else
-			{
-				k=0;
-				nRF24->SetAddr(nRF24_PIPETX, &nRF24_TX_ADDR2[0]);
-				nRF24->SetAddr(nRF24_PIPE0,  &nRF24_TX_ADDR2[0]);
-			}
-
-			// Print payload
-			for (uint8_t l=0; l < payload_length; l++)
-			{
-				sprintf(&buffer[l*2], "%02X", (unsigned) nRF24_payload[l]);
-			}
-			buffer[20]='\0';
-			tx_printf("PAYLOAD:>%s< ... TX: ", buffer);
-
-			// Transmit a packet
-			tx_res = nRF24->TransmitPacket(nRF24_payload, payload_length);
-			otx = nRF24->GetRetransmitCounters();
-			otx_plos_cnt = (otx & nRF24_MASK_PLOS_CNT) >> 4; // packets lost counter
-			otx_arc_cnt  = (otx & nRF24_MASK_ARC_CNT); // auto retransmissions counter
-
-			switch (tx_res) {
-			case NRF24L01::nRF24_TX_SUCCESS:
-				tx_printf("OK");
-				break;
-			case NRF24L01::nRF24_TX_TIMEOUT:
-				tx_printf("TIMEOUT");
-				break;
-			case NRF24L01::nRF24_TX_MAXRT:
-				tx_printf("MAX RETRANSMIT");
-				packets_lost += otx_plos_cnt;
-				nRF24->ResetPLOS();
-				break;
-			default:
-				tx_printf("ERROR");
-				break;
-			}
-			tx_printf("   ARC=%i LOST=%i\n", otx_arc_cnt, packets_lost);
-
-		} */
-
-
 	}
 
 }

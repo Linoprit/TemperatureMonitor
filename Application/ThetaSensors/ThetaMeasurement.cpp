@@ -66,13 +66,29 @@ uint8_t ThetaMeasurement::update(uint8_t sensor_ID[SENSOR_ID_LEN], float tempera
 
 		if (ID_Table::ID_is_same(actData->sensor_ID, sensor_ID))
 		{
-			actData->temperature = temperature;
+			actData->temperature  = temperature;
+			actData->timeoutCount = 0u;
 			return SUCCESS;
 		}
 	}
 	return ERROR;
 }
 
+void   ThetaMeasurement::incrementTimeouts(void)
+{
+	for (uint8_t i=0; i < sensorCount; i++)
+	{
+		SensorDataType* actData = get(i);
+		if (actData->timeoutCount < MAX_TIMEOUT)
+		{
+			actData->timeoutCount ++;
+		}
+		else
+		{
+			actData->temperature  = INVLD_TEMPERATURE;
+		}
+	}
+}
 
 /* to be deleted
 

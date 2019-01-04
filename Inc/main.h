@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -91,10 +91,10 @@
 #define StationCode0_GPIO_Port GPIOB
 #define StationCode1_Pin GPIO_PIN_5
 #define StationCode1_GPIO_Port GPIOB
-#define RELAY_1_Pin GPIO_PIN_8
-#define RELAY_1_GPIO_Port GPIOB
-#define RELAY_2_Pin GPIO_PIN_9
-#define RELAY_2_GPIO_Port GPIOB
+#define RELAY_1__Pin GPIO_PIN_8
+#define RELAY_1__GPIO_Port GPIOB
+#define RELAY_2__Pin GPIO_PIN_9
+#define RELAY_2__GPIO_Port GPIOB
 
 /* ########################## Assert Selection ############################## */
 /**

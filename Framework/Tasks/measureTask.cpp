@@ -83,10 +83,10 @@ void _relayOnOff(uint8_t relayNo, bool on)
 		state = GPIO_PIN_SET;
 
 	if (relayNo == 1)
-		HAL_GPIO_WritePin(RELAY_1_GPIO_Port, RELAY_1_Pin, state);
+		HAL_GPIO_WritePin(RELAY_1__GPIO_Port, RELAY_1__Pin, state);
 
 	if (relayNo == 2)
-		HAL_GPIO_WritePin(RELAY_2_GPIO_Port, RELAY_2_Pin, state);
+		HAL_GPIO_WritePin(RELAY_2__GPIO_Port, RELAY_2__Pin, state);
 }
 
 void _checkRelays(void)
@@ -97,19 +97,21 @@ void _checkRelays(void)
 		SensorDataType* const sensData   = msmnt->get(i);
 		const theta_sens_type* idTblData = ID_Table::get_struct(sensData->sensor_ID);
 
-		int32_t	tmpTheta = (sensData->temperature + 0.05) * 10;
-		int32_t ThetaThres = idTblData->minTemp * 10;
+		int32_t	tmpTheta      = (sensData->temperature + 0.05) * 10;
+		int32_t ThetaThres_dn = idTblData->minTemp * 10;
+		int32_t ThetaThres_up = (idTblData->minTemp + MIN_TEMP_HYSTERESIS) * 10;
 
-		if(tmpTheta <= ThetaThres)
+		if(tmpTheta <= ThetaThres_dn)
 		{
 			_relayOnOff(idTblData->relayNo, true);
 		}
-		else
+		else if(tmpTheta > ThetaThres_up )
 		{
 			_relayOnOff(idTblData->relayNo, false);
 		}
 	}
 }
+
 
 void startMeasureTsk(void const * argument)
 {
@@ -120,16 +122,17 @@ void startMeasureTsk(void const * argument)
 	tx_printf("Init Measure Task...\n");
 	ow_init(&ow, NULL);    // Initialize 1-Wire library and set user argument to NULL
 
+	osDelay(2000); // after power up, wait for sensors to wake
 	_scanSensors();
 	_initMeasurment();
 
 	for(;;)
 	{
 		//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-
 		//tx_printf("\nStart temperature conversion\n");
+
 		ow_ds18x20_start(&ow, NULL);  // Start conversion on all devices, use protected API
-		osDelay(1000);                // Release thread for 1 second
+		osDelay(1000);
 
 		// Read temperature on all devices
 		for (i = 0; i < sensorCount; i++)
@@ -145,8 +148,36 @@ void startMeasureTsk(void const * argument)
 			}
 		}
 
-		_checkRelays();
 
+
+		//tx_printf("relay on: GPIO_PIN_RESET\n" );
+		//HAL_GPIO_WritePin(RELAY_2_GPIO_Port, RELAY_2_Pin, GPIO_PIN_RESET);
+		//HAL_GPIO_WritePin(RELAY_1_GPIO_Port, RELAY_1_Pin, GPIO_PIN_RESET);
+		//HAL_GPIO_WritePin(RELAY_2__GPIO_Port, RELAY_2__Pin, GPIO_PIN_RESET);
+		//HAL_GPIO_WritePin(RELAY_1__GPIO_Port, RELAY_1__Pin, GPIO_PIN_RESET);
+
+		/*tx_printf("relay off: GPIO_PIN_SET\n" );
+		HAL_GPIO_WritePin(RELAY_11_GPIO_Port, RELAY_11_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(RELAY_21_GPIO_Port, RELAY_21_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(RELAY_1__GPIO_Port, RELAY_1__Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(RELAY_2__GPIO_Port, RELAY_2__Pin, GPIO_PIN_SET);*/
+
+		/*tx_printf("relay 1 off / 2 on \n" );
+		HAL_GPIO_WritePin(RELAY_1_GPIO_Port, RELAY_1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(RELAY_2_GPIO_Port, RELAY_2_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(RELAY_1_GPIO_Port, RELAY_1__Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(RELAY_2_GPIO_Port, RELAY_2__Pin, GPIO_PIN_RESET);*/
+
+
+		/*tx_printf("relay 1 on / 2 off \n" );
+		HAL_GPIO_WritePin(RELAY_1_GPIO_Port, RELAY_1_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(RELAY_2_GPIO_Port, RELAY_2_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(RELAY_1_GPIO_Port, RELAY_1__Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(RELAY_2_GPIO_Port, RELAY_2__Pin, GPIO_PIN_SET);*/
+
+		_checkRelays();
+		msmnt->incrementTimeouts();
+		osDelay(TASK_DELAY);
 
 
 		/*for (i=0; i < sensorCount; i++)

@@ -40,6 +40,7 @@ void nRF24L01_Basis::init()
 	}
 	tx_printf(" OK\n");
 
+
 	nRF24->Init(); // Initialize the nRF24L01 to its default state
 
 	nRF24->SetRFChannel(nRF24_CHANNEL);
@@ -47,46 +48,43 @@ void nRF24L01_Basis::init()
 	nRF24->SetCRCScheme(nRF24_CRC_2byte);
 	nRF24->SetAddrWidth(5);
 
+
 	if (station == ID_Table::SLAVE_01)
 	{
 		nRF24->SetAddr(nRF24_PIPETX, &nRF24_TX_ADDR1[0]); // program TX address
-		nRF24->SetAddr(nRF24_PIPE0, &nRF24_TX_ADDR1[0]); // program address for pipe#0, must be same as TX (for Auto-ACK)
 	}
 
 	if (station == ID_Table::SLAVE_02)
 	{
 		nRF24->SetAddr(nRF24_PIPETX, &nRF24_TX_ADDR2[0]); // program TX address
-		nRF24->SetAddr(nRF24_PIPE0, &nRF24_TX_ADDR2[0]); // program address for pipe#0, must be same as TX (for Auto-ACK)
 	}
 
 	if (station == ID_Table::SLAVE_03)
 	{
 		nRF24->SetAddr(nRF24_PIPETX, &nRF24_TX_ADDR3[0]); // program TX address
-		nRF24->SetAddr(nRF24_PIPE0, &nRF24_TX_ADDR3[0]); // program address for pipe#0, must be same as TX (for Auto-ACK)
 	}
-
 
 	if (station != ID_Table::MASTER)
 	{
-		nRF24->SetAutoRetr(nRF24_ARD_2500us, nRF_AUTO_RETRY);
-		nRF24->EnableAA(nRF24_PIPE0);
 		nRF24->SetOperationalMode(nRF24_MODE_TX);
 	}
 
+	nRF24->DisableAA(0xFF); // Disable ShockBurst for all RX pipes
 	nRF24->SetTXPower(nRF24_TXPWR_0dBm);
 	nRF24->ClearIRQFlags();
 	nRF24->SetPowerMode(nRF24_PWR_UP); // Wake the transceiver
 
 	if (station == ID_Table::MASTER)
 	{
-		nRF24->SetAddr(nRF24_PIPE1, &nRF24_RX_ADDR1[0]);
-		nRF24->SetRXPipe(nRF24_PIPE1, nRF24_AA_ON, nRF_PAYLOAD_LEN);
-		nRF24->SetAddr(nRF24_PIPE2, &nRF24_RX_ADDR2[0]);
-		nRF24->SetRXPipe(nRF24_PIPE2, nRF24_AA_ON, nRF_PAYLOAD_LEN);
-		nRF24->SetAddr(nRF24_PIPE3, &nRF24_RX_ADDR3[0]);
-		nRF24->SetRXPipe(nRF24_PIPE3, nRF24_AA_ON, nRF_PAYLOAD_LEN);
-
 		nRF24->SetOperationalMode(nRF24_MODE_RX);
+
+		nRF24->SetAddr(nRF24_PIPE1, &nRF24_RX_ADDR1[0]);
+		nRF24->SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, nRF_PAYLOAD_LEN);
+		nRF24->SetAddr(nRF24_PIPE2, &nRF24_RX_ADDR2[0]);
+		nRF24->SetRXPipe(nRF24_PIPE2, nRF24_AA_OFF, nRF_PAYLOAD_LEN);
+		nRF24->SetAddr(nRF24_PIPE3, &nRF24_RX_ADDR3[0]);
+		nRF24->SetRXPipe(nRF24_PIPE3, nRF24_AA_OFF, nRF_PAYLOAD_LEN);
+
 		nRF24->CE_H();
 
 		nRF24_callback_add((ISR_callback*) this);
@@ -99,7 +97,7 @@ void nRF24L01_Basis::init()
 NRF24L01::nRF24_TXResult nRF24L01_Basis::transmitPacket(
 		uint8_t *pBuf, uint8_t length)
 {
-	volatile uint32_t wait = nRF24_WAIT_TIMEOUT;
+	volatile int32_t wait = nRF24_WAIT_TIMEOUT;
 	uint8_t otx;
 	uint8_t otx_plos_cnt; // lost packet count
 	uint8_t otx_arc_cnt;  // retransmit count
@@ -134,7 +132,7 @@ NRF24L01::nRF24_TXResult nRF24L01_Basis::transmitPacket(
 	otx_arc_cnt  = (otx & nRF24_MASK_ARC_CNT); // auto retransmissions counter
 	add_stats(otx_plos_cnt, otx_arc_cnt);
 
-	if (!wait) {
+	if (wait <= 0) {
 		return NRF24L01::nRF24_TX_TIMEOUT;
 	}
 
@@ -181,7 +179,9 @@ void nRF24L01_Basis::ISR_callback_fcn (void)
 	uint8_t nRF24_payload[nRF_PAYLOAD_LEN];
 
 	// TODO remove ledblink
-	//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+
+
 
 	if (nRF24->GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY)
 	{
