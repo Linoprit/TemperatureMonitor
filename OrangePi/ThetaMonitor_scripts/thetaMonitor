@@ -1,0 +1,49 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:		thetaMonitor
+# Required-Start:	mysql
+# Required-Stop:	mysql
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	thetaMonitor application
+### END INIT INFO
+
+running()
+{
+    ps -ef | grep "ThetaMonitorSerial_qt" 
+}
+
+start()
+{
+    echo "mmc0" > /sys/class/leds/orangepi\:red\:status/trigger
+    /usr/local/bin/ThetaMonitorSerial_qt &
+}
+
+stop()
+{
+	echo "thetaMonior: nothing to be done"
+}
+
+dmnstatus()
+{
+    running
+}
+
+case "$1" in
+start)
+	start
+	;;
+stop)
+	stop_vms && stop
+	;;
+restart|force-reload)
+	stop_vms && stop && start
+	;;
+status)
+	dmnstatus
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart|force-reload|status}"
+	exit 1
+esac

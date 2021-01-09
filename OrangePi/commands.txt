@@ -1,0 +1,103 @@
+resizing image after writing
+- sudo gparted /dev/mmcblk0 => Partition vergrößern
+- sudo e2fsck -f /dev/mmcblk0p1
+- sudo resize2fs /dev/mmcblk0p1
+
+armbian-config => setup network => static IP-Address
+ address 192.168.0.104
+ netmask 255.255.255.0
+ gateway 192.168.0.1
+
+install lamp-server
+- https://www.howtoforge.com/tutorial/install-apache-with-php-and-mysql-lamp-on-debian-stretch/
+- phpmyadmin => https://www.bennetrichter.de/anleitungen/apache2-php7-mysql-phpmyadmin/
+  cd /usr/share
+  wget https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -O phpmyadmin.zip
+  unzip phpmyadmin.zip
+  rm phpmyadmin.zip
+  mv phpMyAdmin-*-all-languages phpmyadmin
+  chmod -R 0755 phpmyadmin
+  nano /etc/apache2/conf-available/phpmyadmin.conf
+    # phpMyAdmin Apache configuration
+
+    Alias /phpmyadmin /usr/share/phpmyadmin
+
+    <Directory /usr/share/phpmyadmin>
+        Options SymLinksIfOwnerMatch
+        DirectoryIndex index.php
+    </Directory>
+
+    # Disallow web access to directories that don't need it
+    <Directory /usr/share/phpmyadmin/templates>
+        Require all denied
+    </Directory>
+    <Directory /usr/share/phpmyadmin/libraries>
+        Require all denied
+    </Directory>
+    <Directory /usr/share/phpmyadmin/setup/lib>
+        Require all denied
+    </Directory>
+
+  - a2enconf phpmyadmin
+  - systemctl reload apache2
+  - mkdir /usr/share/phpmyadmin/tmp/
+  - chown -R www-data:www-data /usr/share/phpmyadmin/tmp/
+
+neues Passwort mysql
+ - mysql -u root -p
+ - use mysql;
+ - update user set password=PASSWORD('dein-neues-passwort') where User='StmClient';
+ - flush privileges;
+ - quit
+
+orange pi zero enable uart
+ - /boot/armbianEnv.txt
+ -  overlay_prefix=sun8i-h3
+    overlays=usbhost2 usbhost3 uart1 uart2
+
+make root-fs readonly
+ - https://hallard.me/raspberry-pi-read-only/
+ - rm -rf /var/lib/php/sessions/
+ - ln -s /tmp /var/lib/php/sessions
+
+init.d script enabling
+    - cp thetaMonitor script to /etc/init.d
+    - update-rc.d thetaMonitor enable
+
+compile with WiringOP-lib
+    - https://diyprojects.io/orange-pi-armbian-install-wiringop-library-wiringpi-equivalent/#.Xf53ttlCeCg
+    - git clone https://github.com/zhaolei/WiringOP.git -b h3 
+    NOTE: To compile programs with wiringBP v2, you need to add: -lwiringPi
+    to your compile line(s) To use the Gertboard, MaxDetect, etc.
+    code (the devLib), you need to also add: -lwiringPiDev
+    to your compile line(s).
+
+
+
+ssh 192.168.0.105
+ifconfig wlan0 up
+
+flash image:
+- sudo dd bs=4M if=Armbian_5.69_Orangepizero_Ubuntu_bionic_next_4.19.13.img of=/dev/sdc
+- sudo dd bs=4M if=Armbian_5.69_Orangepizero_Ubuntu_bionic_next_4.19.13_backup.img of=/dev/mmcblk0
+- sudo dd if=Armbian_19.11.3_Orangepizero_buster_current_5.3.9.img of=/dev/mmcblk0sy bs=1M
+backup
+- sudo dd if=/dev/mmcblk0 of=Orangepizero.img
+- 7za a -mmt8 20191215_Armbian_buster_current_5.3.9_backup.7z  Orangepizero.img
+
+LEDs
+    - https://forum.armbian.com/topic/6306-orange-pi-zero-h2-status-led/
+    - echo "heartbeat" > /sys/class/leds/orangepi\:red\:status/trigger
+    - echo "mmc0" > /sys/class/leds/orangepi\:red\:status/trigger
+    - none mmc0 mmc1 timer [heartbeat] backlight default-on
+
+
+nmtui
+lscpu
+armbian-config
+
+mysql -u root -p
+mysql -u harald -p
+show databases;
+use DBNAME;
+
