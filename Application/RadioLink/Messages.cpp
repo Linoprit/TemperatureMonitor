@@ -10,16 +10,66 @@
 #include "cmsis_os.h"
 
 
-
-
-
 Messages::Messages()
 {
 	for (uint8_t i=0; i < Messages::thetas; i++)
 		new_messages[i] = false;
 }
 
-void Messages::prepare_payload(uint8_t* payload, uint8_t* data, uint8_t msg_type)
+
+// At the moment we only send the thea_struct, so there's no need to hav a 'msg_type'
+// argument.
+void Messages::prepare_uart_message(
+		const SensorDataType* msmnt, msg_nRF_theta_struct* msg)
+{
+	msg->sync_char[0]       = SYNC_CHAR_1;
+	msg->sync_char[1]       = SYNC_CHAR_2;
+	msg->header.msg_class   = CLASS_MEASUREMENT;
+	msg->header.msg_id      = MSG_ID_THETA;
+	msg->header.payload_len = sizeof(nRF_theta_struct);
+
+	for(uint8_t i=0; i < 8; i++)
+	{
+		msg->payload.sensor_id[i] = msmnt->sensor_ID[i];
+	}
+	msg->payload.theta	  = msmnt->temperature;
+	msg->checksum 		  = calc_checksum(&msg->header);
+}
+
+
+uint8_t Messages::calc_checksum(rcv_header_struct *rcv_header)
+{
+	uint8_t i, crc = 0;
+	uint8_t* msg_buffer = (uint8_t*) rcv_header;
+
+	// we must exclude the chksum byte at the end!
+	uint8_t len = HEADER_LENGTH + rcv_header->payload_len;
+	for (i = 0; i < len; i++)
+	{
+		crc = _crc_ibutton_update(crc, *msg_buffer);
+		msg_buffer++;
+	}
+	return crc;
+}
+
+
+uint8_t Messages::_crc_ibutton_update(uint8_t crc, uint8_t data)
+{
+	uint8_t i;
+
+	crc = crc ^ data;
+	for (i = 0; i < 8; i++)
+	{
+		if (crc & 0x01)
+			crc = (crc >> 1) ^ 0x8C;
+		else
+			crc >>= 1;
+	}
+
+	return crc;
+}
+
+void Messages::prepare_nRF_payload(uint8_t* payload, uint8_t* data, uint8_t msg_type)
 {
 	if (msg_type == MSG_ID_STATISTICS)
 	{
@@ -37,9 +87,7 @@ void Messages::prepare_payload(uint8_t* payload, uint8_t* data, uint8_t msg_type
 
 }
 
-
-
-void Messages::put_payload_to_struct(uint8_t* msg_buf)
+void Messages::put_nRF_payload_to_struct(uint8_t* msg_buf)
 {
 	uint8_t *pointer = 0;
 
@@ -92,12 +140,12 @@ void Messages::put_payload_to_struct(uint8_t* msg_buf)
 
 
 
-Messages::msg_statistics_struct* Messages::get_msg_statistics(void)
+Messages::nRF_statistics_struct* Messages::get_msg_statistics(void)
 {
 	return &msg_statistics;
 }
 
-Messages::msg_theta_struct*	Messages::get_msg_theta(void)
+Messages::nRF_theta_struct*	Messages::get_msg_theta(void)
 {
 	return &msg_theta;
 }

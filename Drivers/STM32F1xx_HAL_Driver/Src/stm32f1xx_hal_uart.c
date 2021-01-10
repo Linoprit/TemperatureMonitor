@@ -1560,6 +1560,7 @@ void HAL_UART_IRQHandler(UART_HandleTypeDef *huart)
    uint32_t errorflags = 0x00U;
    uint32_t dmarequest = 0x00U;
 
+// <HG_modification>
    uint32_t tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE);
    uint32_t tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_IDLE);
    /* UART RX Idle interrupt --------------------------------------------*/
@@ -1568,7 +1569,7 @@ void HAL_UART_IRQHandler(UART_HandleTypeDef *huart)
      __HAL_UART_CLEAR_IDLEFLAG(huart);
      HAL_UART_RxIdleCallback(huart);
    }
-
+// </HG_modification>
   /* If no error occurs */
   errorflags = (isrflags & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE));
   if(errorflags == RESET)
@@ -1682,7 +1683,7 @@ void HAL_UART_IRQHandler(UART_HandleTypeDef *huart)
   }
 }
 
-
+// <HG_modification>
 /**
   * @brief  Rx idle callback.
   * @param  huart: Pointer to a UART_HandleTypeDef structure that contains
@@ -1697,7 +1698,7 @@ void HAL_UART_IRQHandler(UART_HandleTypeDef *huart)
            the HAL_UART_RxIdleCallback can be implemented in the user file
    */
 }
-
+// </HG_modification>
 
 
 /**

@@ -160,6 +160,14 @@ void nRF24L01_Basis::add_stats(uint8_t lostPkgCount, uint8_t retransCount)
 	this->retransCount += retransCount;
 }
 
+bool stationType_isMaster(void)
+{
+	ID_Table::StationType stationType = Common::nRF24_basis->get_stationType();
+	if  (stationType == ID_Table::MASTER)
+		return true;
+	else
+		return false;
+}
 
 ID_Table::StationType nRF24L01_Basis::get_stationType(void)
 {
@@ -178,9 +186,7 @@ void nRF24L01_Basis::ISR_callback_fcn (void)
 	uint8_t payload_length;
 	uint8_t nRF24_payload[nRF_PAYLOAD_LEN];
 
-	// TODO remove ledblink
 	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-
 
 
 	if (nRF24->GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY)
@@ -192,15 +198,15 @@ void nRF24L01_Basis::ISR_callback_fcn (void)
 		if (Common::nRF24_basis->get_stationType() == ID_Table::MASTER)
 		{
 			osPoolId* msg_pool 	= get_msg_pool();
-			osMessageQId* queue = get_quue();
+			osMessageQId* queue = get_queue();
 
 			if(payload_length != nRF_PAYLOAD_LEN)
 				return;
 
-			Messages::msg_dummy_struct* msg =
-					(Messages::msg_dummy_struct*) osPoolAlloc(*msg_pool);
+			Messages::nRF_dummy_struct* msg =
+					(Messages::nRF_dummy_struct*) osPoolAlloc(*msg_pool);
 
-			for (uint8_t i=0; i < sizeof(Messages::msg_dummy_struct); i++)
+			for (uint8_t i=0; i < sizeof(Messages::nRF_dummy_struct); i++)
 			{
 				msg->byte[i] = nRF24_payload[i];
 			}

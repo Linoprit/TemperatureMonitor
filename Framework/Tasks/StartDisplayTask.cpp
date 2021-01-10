@@ -31,6 +31,7 @@ void StartDisplayTask(void const * argument)
 {
 	UNUSED(argument);
 
+	osDelay(2000); //older LCDs need time to settle
 	lcd = new LCDFunctions();
 	lcd->ISR_callback_fcn(); // Backlight on
 
@@ -50,7 +51,7 @@ void StartDisplayTask(void const * argument)
 		}*/
 
 		//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-		osDelay(3000);
+		osDelay(DISPLAY_TASK_DELAY);
 	}
 
 

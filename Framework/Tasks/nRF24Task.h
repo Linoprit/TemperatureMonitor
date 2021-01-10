@@ -38,7 +38,7 @@ EXTERNC ThetaMeasurement* get_remoteMsmt(void) ;
 
 // put cpp includes here!!
 osPoolId* get_msg_pool(void);
-osMessageQId* get_quue(void);
+osMessageQId* get_queue(void);
 
 
 

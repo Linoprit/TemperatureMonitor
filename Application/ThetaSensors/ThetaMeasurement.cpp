@@ -90,6 +90,15 @@ void   ThetaMeasurement::incrementTimeouts(void)
 	}
 }
 
+
+bool ThetaMeasurement::isValid(float temperature)
+{
+	if (temperature < (float) INVLD_TEMPERATURE)
+		return true;
+	else
+		return false;
+}
+
 /* to be deleted
 
 	tx_printf("Size of sensorData: %i / %i\n", sizeof(msm), sizeof(SensorDataType));

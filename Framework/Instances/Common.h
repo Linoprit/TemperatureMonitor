@@ -11,9 +11,11 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-
-#define TASK_DELAY 60000
-
+// Cyclic task delays in [ms]
+#define MASTERSERAL_TASK_DELAY 	5 * 60000
+#define MEASURE_TASK_DELAY		60000
+#define NRF24_TASK_DELAY		60000
+#define DISPLAY_TASK_DELAY		10000
 
 // C interface
 #ifdef __cplusplus
@@ -28,9 +30,10 @@ EXTERNC SPI_HandleTypeDef*  get_nRF24_SPI(void);
 EXTERNC SPI_HandleTypeDef*  get_LCD_SPI(void);
 EXTERNC osThreadId* 		get_errorMsgTask(void);
 EXTERNC osThreadId* 		get_nRF24Task(void);
+EXTERNC UART_HandleTypeDef* get_huart2(void);
+
 
 #undef EXTERNC
-
 #ifdef __cplusplus
 
 // put cpp includes here!!

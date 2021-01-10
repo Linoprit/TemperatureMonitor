@@ -89,29 +89,47 @@ void _relayOnOff(uint8_t relayNo, bool on)
 		HAL_GPIO_WritePin(RELAY_2__GPIO_Port, RELAY_2__Pin, state);
 }
 
-void _checkRelays(void)
+void _checkChannel(uint8_t channel)
 {
 	size_t i;
+	bool theta_on_reached 	  = false;
+	bool theta_off_reached 	  = true;
+
 	for (i = 0; i < sensorCount; i++)
 	{
 		SensorDataType* const sensData   = msmnt->get(i);
 		const theta_sens_type* idTblData = ID_Table::get_struct(sensData->sensor_ID);
 
-		int32_t	tmpTheta      = (sensData->temperature + 0.05) * 10;
-		int32_t ThetaThres_dn = idTblData->minTemp * 10;
-		int32_t ThetaThres_up = (idTblData->minTemp + MIN_TEMP_HYSTERESIS) * 10;
+		int32_t	tmpTheta     = (sensData->temperature + 0.05) * 10;
+		int32_t thres_on     = idTblData->minTemp * 10;
+		int32_t thres_off    = (idTblData->minTemp + MIN_TEMP_HYSTERESIS) * 10;
 
-		if(tmpTheta <= ThetaThres_dn)
+		if ( (idTblData->relayNo != channel) ||
+				(!ThetaMeasurement::isValid(sensData->temperature)) )
 		{
-			_relayOnOff(idTblData->relayNo, true);
+			continue;
 		}
-		else if(tmpTheta > ThetaThres_up )
-		{
-			_relayOnOff(idTblData->relayNo, false);
-		}
+
+		if (tmpTheta <= thres_on)		// one theta < on
+			theta_on_reached = true;
+
+		if (tmpTheta < thres_off) 		// one theta < off
+			theta_off_reached = false;
 	}
+
+	if (theta_off_reached == true)
+		_relayOnOff(channel, false);
+
+	if (theta_on_reached == true)
+		_relayOnOff(channel, true);
 }
 
+
+void _checkRelays(void)
+{
+	_checkChannel(1);
+	_checkChannel(2);
+}
 
 void startMeasureTsk(void const * argument)
 {
@@ -177,7 +195,7 @@ void startMeasureTsk(void const * argument)
 
 		_checkRelays();
 		msmnt->incrementTimeouts();
-		osDelay(TASK_DELAY);
+		osDelay(MEASURE_TASK_DELAY);
 
 
 		/*for (i=0; i < sensorCount; i++)
