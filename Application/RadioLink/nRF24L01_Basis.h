@@ -8,7 +8,18 @@
 #ifndef RADIOLINK_NRF24L01_BASIS_H_
 #define RADIOLINK_NRF24L01_BASIS_H_
 
+// C interface
+#ifdef __cplusplus
+#define EXTERNC extern "C"
+#else
+#define EXTERNC
+#endif
 
+#include "stdbool.h"
+EXTERNC bool stationType_isMaster(void);
+
+#undef EXTERNC
+#ifdef __cplusplus
 
 #include "../Framework/Instances/callbacks.h"
 #include "../Framework/Devices/nRF24L01/nRF24L01.h"
@@ -60,4 +71,5 @@ private:
 
 };
 
+#endif // C interface
 #endif /* RADIOLINK_NRF24L01_BASIS_H_ */

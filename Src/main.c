@@ -55,6 +55,8 @@
 
 #include "../Framework/Instances/Common.h"
 #include "../Framework/System/uart_printf.h"
+#include "../Framework/Tasks/MasterSerialTask.h"
+#include "../Application/RadioLink/nRF24L01_Basis.h"
 
 /* USER CODE END Includes */
 
@@ -81,6 +83,8 @@ osStaticThreadDef_t displayTaskControlBlock;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+
+osThreadId masterSerialTaskHandle;
 
 /* USER CODE END PV */
 
@@ -110,6 +114,7 @@ UART_HandleTypeDef* get_huart2(void)			{ return &huart2; 			 }
 UART_HandleTypeDef* get_huart3(void)			{ return &huart3; 			 }
 //DMA_HandleTypeDef*  get_hdma_usart3_rx(void)	{ return &hdma_usart3_rx;	 }
 
+extern void StartMasterSerialTask(void const * argument);
 
 /* USER CODE END PFP */
 
@@ -183,15 +188,24 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
+  //osThreadId masterSerialTasHandle;
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
 
-
   common_init();
   HAL_GPIO_WritePin(RELAY_1__GPIO_Port, RELAY_1__Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(RELAY_2__GPIO_Port, RELAY_2__Pin, GPIO_PIN_SET);
+
+  // definition and creation of masterSerialTask, sends data to linux-host
+  if (stationType_isMaster())
+  {
+	  osThreadDef(masterSerialTask, StartMasterSerialTask, osPriorityLow, 0, 128);
+	  masterSerialTaskHandle = osThreadCreate(osThread(masterSerialTask), NULL);
+  }
 
   /* USER CODE END RTOS_QUEUES */
  

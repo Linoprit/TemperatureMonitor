@@ -36,6 +36,7 @@ public:
 	SensorDataType* get(uint8_t pos) const;
 	uint8_t get_sensorCount(void) { return sensorCount; }
 	void    incrementTimeouts(void);
+	static bool    isValid(float temperature);
 
 private:
 	SensorDataType* sensorData;

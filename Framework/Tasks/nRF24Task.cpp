@@ -22,16 +22,15 @@
 ThetaMeasurement* remoteMsmt = NULL;
 ThetaMeasurement* get_remoteMsmt(void) { return remoteMsmt; };
 
-
 osPoolId  msg_pool;
 osPoolId* get_msg_pool(void) { return &msg_pool; }
 
 osMessageQId  queue;
-osMessageQId* get_quue(void) {return &queue; }
+osMessageQId* get_queue(void) {return &queue; }
 
 
 
-void process_rx_data(Messages::msg_dummy_struct* msg)
+void process_rx_data(Messages::nRF_dummy_struct* msg)
 {
 	if(msg->byte[0] == MSG_ID_THETA)
 	{
@@ -64,8 +63,8 @@ void StartnRF24Tsk(void const * argument)
 	{
 		remoteMsmt = new ThetaMeasurement(); // no argument = Master mode
 
-		osPoolDef(msg_pool, ID_TABLE_LEN, Messages::msg_dummy_struct);
-		osMessageQDef(queue, ID_TABLE_LEN, Messages::msg_dummy_struct);
+		osPoolDef(msg_pool, ID_TABLE_LEN, Messages::nRF_dummy_struct);
+		osMessageQDef(queue, ID_TABLE_LEN, Messages::nRF_dummy_struct);
 
 		msg_pool = osPoolCreate(osPool(msg_pool));
 		queue    = osMessageCreate(osMessageQ(queue), NULL);
@@ -75,17 +74,15 @@ void StartnRF24Tsk(void const * argument)
 			//osDelay(1000);
 			//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
-			osEvent evt = osMessageGet(queue, 3000);// osWaitForever);
-			if(evt.status == osEventTimeout)
+			osEvent evt = osMessageGet(queue, NRF24_TASK_DELAY);// osWaitForever);
+			if (evt.status == osEventTimeout)
 				tx_printf("osMessageGet: timeout ");
 
 			if (evt.status == osEventMessage)
 			{
-				Messages::msg_dummy_struct* msg =
-						(Messages::msg_dummy_struct*) evt.value.p;
-
+				Messages::nRF_dummy_struct* msg =
+						(Messages::nRF_dummy_struct*) evt.value.p;
 				process_rx_data(msg);
-
 				osPoolFree(msg_pool, msg);
 			}
 		}
@@ -111,8 +108,10 @@ void StartnRF24Tsk(void const * argument)
 
 			for (i=0; i < msmnt->get_sensorCount(); i++)
 			{
-				Messages::msg_theta_struct msg;
+				Messages::nRF_theta_struct msg;
 				const SensorDataType* data = msmnt->get(i);
+
+				HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
 				for(uint8_t i=0; i < 8; i++)
 				{
@@ -127,7 +126,7 @@ void StartnRF24Tsk(void const * argument)
 				}
 			}
 
-			osDelay(TASK_DELAY); // TODO one Minute cycle
+			osDelay(DISPLAY_TASK_DELAY);
 		}
 	}
 
